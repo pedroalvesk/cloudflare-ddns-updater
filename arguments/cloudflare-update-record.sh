@@ -1,6 +1,6 @@
 #!/bin/bash
 
-log="ddns.log"
+log="cloudflare-$(date +'%Y-%m-%d').log"
 
 ###########################################
 ##  Timestamp on log
