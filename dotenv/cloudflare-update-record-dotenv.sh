@@ -1,25 +1,23 @@
 #!/bin/bash
 
-log="ddns.log"
-
 ###########################################
-##  Check if we have enough arguments
+##  Load .env variables
 ###########################################
-if [ "$#" -ne 5 ]; then
-	message="Usage: $0 <auth_email> <auth_key> <zone_identifier> <record_name> <proxy>"
-  	>&2 echo -e "${message}" >> "${log}"
-exit 1
+if [ -f .env ]
+then
+  export $(cat .env | sed 's/#.*//g' | xargs)
 fi
 
 
 ###########################################
 ##  Variables
 ###########################################
-auth_email=$1									# The email used to login 'https://dash.cloudflare.com'
-auth_key=$2                     			    # Top right corner, "My profile" > "Global API Key"
-zone_identifier=$3  		     				# Can be found in the "Overview" tab of your domain
-record_name=$4           						# Which record you want to be synced
-proxy=$5                  						# Set the proxy to true or false 
+auth_email=$AUTH_EMAIL				              	  # The email used to login 'https://dash.cloudflare.com'
+auth_key=$AUTH_KEY                     			    # Top right corner, "My profile" > "Global API Key"
+zone_identifier=$ZONE_IDENTIFIER  		     	  	# Can be found in the "Overview" tab of your domain
+record_name=$RECORD_NAME           				    	# Which record you want to be synced
+proxy=$PROXY                  			      			# Set the proxy to true or false 
+log=$LOG_FILEPATH
 
 
 ###########################################
