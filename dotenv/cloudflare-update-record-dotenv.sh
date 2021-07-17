@@ -21,6 +21,13 @@ log=$LOG_FILEPATH
 
 
 ###########################################
+##  Timestamp on log
+###########################################
+message=$(date +"%D %T")
+  	>&2 echo -e "\n${message}" >> "${log}"
+
+
+###########################################
 ## Check if we have an public IP
 ###########################################
 ip=$(curl -s https://api.ipify.org || curl -s https://ipv4.icanhazip.com/ || curl -s https://ip4.seeip.org)
@@ -34,7 +41,7 @@ fi
 ###########################################
 ## Seek for the A record
 ###########################################
-echo " Check Initiated" >> "${log}"
+echo "Check Initiated" >> "${log}"
 record=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$zone_identifier/dns_records?name=$record_name" -H "X-Auth-Email: $auth_email" -H "X-Auth-Key: $auth_key" -H "Content-Type: application/json")
 
 
@@ -42,7 +49,7 @@ record=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$zone_identi
 ## Check if the domaine has an A record
 ###########################################
 if [[ $record == *"\"count\":0"* ]]; then
-  message=" Record does not exist, perhaps create one first? (${ip} for ${record_name})"
+  message="Record does not exist, perhaps create one first? (${ip} for ${record_name})"
   >&2 echo -e "${message}" >> "${log}"
   exit 1
 fi
@@ -54,7 +61,7 @@ fi
 old_ip=$(echo "$record" | grep -Po '(?<="content":")[^"]*' | head -1)
 # Compare if they're the same
 if [[ $ip == $old_ip ]]; then
-  message=" IP ($ip) for ${record_name} has not changed."
+  message="IP ($ip) for ${record_name} has not changed."
   echo "${message}" >> "${log}"
   exit 0
 fi

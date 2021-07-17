@@ -12,21 +12,30 @@ message=$(date +"%D %T")
 ###########################################
 ##  Check if we have enough arguments
 ###########################################
-if [ "$#" -ne 5 ]; then
-	message="Usage: $0 <auth_email> <auth_key> <zone_identifier> <record_name> <proxy>"
-  	>&2 echo -e "${message}" >> "${log}"
+if [ "$#" -ne 1 ]; then
+	message="Usage: $0 <record_name>"
+		>&2 echo -e "${message}" >> "${log}"
 exit 1
+fi
+
+
+###########################################
+##  Load .env variables
+###########################################
+if [ -f .env ]
+then
+  export $(cat .env | sed 's/#.*//g' | xargs)
 fi
 
 
 ###########################################
 ##  Variables
 ###########################################
-auth_email=$1									# The email used to login 'https://dash.cloudflare.com'
-auth_key=$2                     			    # Top right corner, "My profile" > "Global API Key"
-zone_identifier=$3  		     				# Can be found in the "Overview" tab of your domain
-record_name=$4           						# Which record you want to be synced
-proxy=$5                  						# Set the proxy to true or false 
+auth_email=$AUTH_EMAIL								  			# The email used to login 'https://dash.cloudflare.com'
+auth_key=$AUTH_KEY    	  										# Top right corner, "My profile" > "Global API Key"
+zone_identifier=$ZONE_IDENTIFIER  						# Can be found in the "Overview" tab of your domain
+record_name=$1           											# Which record you want to be synced
+proxy=$PROXY                  								# Set the proxy to true or false 
 
 
 ###########################################
@@ -34,9 +43,9 @@ proxy=$5                  						# Set the proxy to true or false
 ###########################################
 ip=$(curl -s https://api.ipify.org || curl -s https://ipv4.icanhazip.com/ || curl -s https://ip4.seeip.org)
 if [ "${ip}" == "" ]; then 
-  message="No public IP found."
-  >&2 echo -e "${message}" >> "${log}"
-  exit 1
+	message="No public IP found."
+	>&2 echo -e "${message}" >> "${log}"
+	exit 1
 fi
 
 
@@ -51,9 +60,9 @@ record=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$zone_identi
 ## Check if the domaine has an A record
 ###########################################
 if [[ $record == *"\"count\":0"* ]]; then
-  message=" Record does not exist, perhaps create one first? (${ip} for ${record_name})"
-  >&2 echo -e "${message}" >> "${log}"
-  exit 1
+	message="Record does not exist, perhaps create one first? (${ip} for ${record_name})"
+	>&2 echo -e "${message}" >> "${log}"
+	exit 1
 fi
 
 
@@ -63,9 +72,9 @@ fi
 old_ip=$(echo "$record" | grep -Po '(?<="content":")[^"]*' | head -1)
 # Compare if they're the same
 if [[ $ip == $old_ip ]]; then
-  message=" IP ($ip) for ${record_name} has not changed."
-  echo "${message}" >> "${log}"
-  exit 0
+	message="IP ($ip) for ${record_name} has not changed."
+	echo "${message}" >> "${log}"
+	exit 0
 fi
 
 
@@ -90,11 +99,11 @@ update=$(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$zone_identi
 ###########################################
 case "$update" in
 *"\"success\":false"*)
-  message="$ip $record_name DDNS failed for $record_identifier ($ip). DUMPING RESULTS:\n$update"
-  >&2 echo -e "${message}" >> "${log}"
-  exit 1;;
+	message="$ip $record_name DDNS failed for $record_identifier ($ip). DUMPING RESULTS:\n$update"
+	>&2 echo -e "${message}" >> "${log}"
+	exit 1;;
 *)
-  message="$ip $record_name DDNS updated."
-  echo "${message}" >> "${log}"
-  exit 0;;
+	message="$ip $record_name DDNS updated."
+	echo "${message}" >> "${log}"
+	exit 0;;
 esac
